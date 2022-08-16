@@ -1,4 +1,8 @@
+#!/usr/bin/env node
 "use strict";
+/**
+ * Module dependencies.
+ */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -28,16 +32,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
 const app_1 = __importDefault(require("./app"));
+var debug = require("debug")("socketio-server:server");
 const http = __importStar(require("http"));
 const socket_1 = __importDefault(require("./socket"));
-require('dotenv').config();
-var port = process.env.PORT || "9000";
+/**
+ * Get port from environment and store in Express.
+ */
+var port = normalizePort(process.env.PORT || "9000");
 app_1.default.set("port", port);
+/**
+ * Create HTTP server.
+ */
 var server = http.createServer(app_1.default);
+/**
+ * Listen on provided port, on all network interfaces.
+ */
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 const io = (0, socket_1.default)(server);
+/**
+ * Normalize a port into a number, string, or false.
+ */
+function normalizePort(val) {
+    var port = parseInt(val, 10);
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
+    if (port >= 0) {
+        // port number
+        return port;
+    }
+    return false;
+}
+/**
+ * Event listener for HTTP server "error" event.
+ */
 function onError(error) {
     if (error.syscall !== "listen") {
         throw error;
@@ -57,9 +88,14 @@ function onError(error) {
             throw error;
     }
 }
+/**
+ * Event listener for HTTP server "listening" event.
+ */
 function onListening() {
     var addr = server.address();
     if (!addr)
-        throw "Address is NULL";
+        return;
+    var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+    debug("Listening on " + bind);
     console.log("Server Running on Port: ", port);
 }

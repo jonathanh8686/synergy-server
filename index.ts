@@ -1,15 +1,45 @@
-import express, {Express, Request, Response} from 'express';
-import dotenv from 'dotenv';
+import "reflect-metadata";
+import app from "./app";
+import * as http from "http";
+import socketServer from "./socket";
 
-dotenv.config();
+require('dotenv').config()
 
-const app: Express = express();
-const port = process.env.PORT;
+var port = process.env.PORT || "9000"
+app.set("port", port);
 
-app.get('/', (req : Request, res : Response) => {
-  res.send('Synergy-Server!');
-});
+var server = http.createServer(app);
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at https://localhost:${port}`);
-});
+server.listen(port);
+server.on("error", onError);
+server.on("listening", onListening);
+
+const io = socketServer(server);
+
+function onError(error:NodeJS.ErrnoException) {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
+      process.exit(1);
+      break;
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+function onListening() {
+  var addr = server.address();
+  if(!addr) throw "Address is NULL";
+  console.log("Server Running on Port: ", port);
+}
